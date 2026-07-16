@@ -41,7 +41,9 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
 class mapCA: UIView {
     let tileSize = CGSize(width: 256, height: 256)
     private var screenScale: CGFloat = 1.0
-    
+    private var tileCache = [String: UIImage]()
+    private let cacheLock = NSLock()
+    private var activeDownloads = Set<String>()
     override class var layerClass: AnyClass {
         return CATiledLayer.self
     }
@@ -65,6 +67,9 @@ class mapCA: UIView {
         }
     }
     
+    private func cacheKey(x: Int, y: Int, z: Int) -> String {
+        return "\(z)_\(x)_\(y)"
+    }
     override func draw(_ rect: CGRect) {
         autoreleasepool {
             guard let context = UIGraphicsGetCurrentContext() else { return }
@@ -73,37 +78,53 @@ class mapCA: UIView {
             let logicalScale = scale / self.screenScale
             let zoom = Int(round(log2(logicalScale)))
             
-            let zoomColors: [UIColor] = [
-                UIColor(red: 1.0, green: 0.9, blue: 0.9, alpha: 1.0),
-                UIColor(red: 0.9, green: 1.0, blue: 0.9, alpha: 1.0),
-                UIColor(red: 0.9, green: 0.9, blue: 1.0, alpha: 1.0),
-                UIColor(red: 1.0, green: 1.0, blue: 0.9, alpha: 1.0),
-                UIColor(red: 1.0, green: 0.9, blue: 1.0, alpha: 1.0)
-            ]
+            let x = Int(round(rect.origin.x / rect.size.width))
+            let y = Int(round(rect.origin.y / rect.size.height))
+            let key = cacheKey(x: x, y: y, z: zoom)
             
-            let colorIndex = abs(zoom) % zoomColors.count
-            let tileBGColor = zoomColors[colorIndex].cgColor
+            cacheLock.lock()
+            let cachedImage = tileCache[key]
+            let isDownloading = activeDownloads.contains(key)
+            cacheLock.unlock()
             
             context.saveGState()
-            context.setFillColor(tileBGColor)
-            context.fill(rect)
             
-            let borderColor = UIColor.red.cgColor
-            context.setStrokeColor(borderColor)
-            context.setLineWidth(2.0 / scale)
-            context.stroke(rect)
-            
-            let crossColor = UIColor(white: 0.3, alpha: 0.5).cgColor
-            context.setStrokeColor(crossColor)
-            context.setLineWidth(1.0 / scale)
-            
-            context.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            context.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-            context.move(to: CGPoint(x: rect.maxX, y: rect.minY))
-            context.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            
-            context.strokePath()
-            context.restoreGState()
+            if let image = cachedImage {
+                context.translateBy(x: rect.origin.x, y: rect.origin.y + rect.size.height)
+                context.scaleBy(x: 1.0, y: -1.0)
+                let drawingRect = CGRect(x: 0, y: 0, width: rect.size.width, height: rect.size.height)
+                if let cgImage = image.cgImage {
+                    context.draw(cgImage, in: drawingRect)
+                }
+            } else {
+                let placeholderColor = UIColor(white: 0.9, alpha: 1.0).cgColor
+                context.setFillColor(placeholderColor)
+                context.fill(rect)
+                    
+                context.setStrokeColor(UIColor(white: 0.8, alpha: 1.0).cgColor)
+                context.setLineWidth(1.0 / scale)
+                context.stroke(rect)
+                    
+                if !isDownloading {
+                    cacheLock.lock()
+                    activeDownloads.insert(key)
+                    cacheLock.unlock()
+                        
+                    yxapi.shared.downloadTile(x: x, y: y, z: zoom) { [weak self] downloadedImage in
+                        guard let self = self else { return }
+                            
+                        self.cacheLock.lock()
+                        self.tileCache[key] = downloadedImage
+                        self.activeDownloads.remove(key)
+                        self.cacheLock.unlock()
+                            
+                        DispatchQueue.main.async {
+                            self.setNeedsDisplay(rect)
+                        }
+                    }
+                }
+            }
         }
     }
 }
+

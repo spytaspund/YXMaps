@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		30F026AF3009377300AA6ACB /* yxapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F026AE3009377300AA6ACB /* yxapi.swift */; };
 		30F97E213008178C00B313FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30F97E203008178C00B313FD /* Assets.xcassets */; };
 		30F97E283008179500B313FD /* MapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F97E273008179500B313FD /* MapVC.swift */; };
 		30F97E2A3008181B00B313FD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F97E293008181B00B313FD /* AppDelegate.swift */; };
@@ -15,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		30F026AE3009377300AA6ACB /* yxapi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = yxapi.swift; sourceTree = "<group>"; };
 		30F97E1B3008178C00B313FD /* YXMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YXMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30F97E203008178C00B313FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		30F97E273008179500B313FD /* MapVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapVC.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				30F97E273008179500B313FD /* MapVC.swift */,
+				30F026AE3009377300AA6ACB /* yxapi.swift */,
 				30F97E293008181B00B313FD /* AppDelegate.swift */,
 				30F97E2D3008185D00B313FD /* Main.storyboard */,
 				30F97E2F3008186300B313FD /* Launch Screen.storyboard */,
@@ -134,6 +137,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				30F97E2A3008181B00B313FD /* AppDelegate.swift in Sources */,
+				30F026AF3009377300AA6ACB /* yxapi.swift in Sources */,
 				30F97E283008179500B313FD /* MapVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
