@@ -45,6 +45,7 @@ class yxapi {
                 let httpResponse = response as? HTTPURLResponse
                 print("REQUESTIN TILE AT \(x), \(y), \(z)")
                 if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData) {
+                    self.cacheTile(tile: image, x: x, y: y, z: z)
                     completion(image)
                 } else {
                     print("OH NO TILE RIP AAAA!!")
