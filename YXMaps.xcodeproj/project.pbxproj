@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3008007E3014B9D6003D8E56 /* gps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3008007D3014B9D6003D8E56 /* gps.swift */; };
+		300800823014C161003D8E56 /* gps.m in Sources */ = {isa = PBXBuildFile; fileRef = 300800813014C161003D8E56 /* gps.m */; };
 		30F026AF3009377300AA6ACB /* yxapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F026AE3009377300AA6ACB /* yxapi.swift */; };
 		30F97E213008178C00B313FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30F97E203008178C00B313FD /* Assets.xcassets */; };
 		30F97E283008179500B313FD /* MapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F97E273008179500B313FD /* MapVC.swift */; };
@@ -16,6 +18,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3008007D3014B9D6003D8E56 /* gps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gps.swift; sourceTree = "<group>"; };
+		3008007F3014C117003D8E56 /* gps.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gps.h; sourceTree = "<group>"; };
+		300800803014C160003D8E56 /* YXMaps-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YXMaps-Bridging-Header.h"; sourceTree = "<group>"; };
+		300800813014C161003D8E56 /* gps.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = gps.m; sourceTree = "<group>"; };
 		30F026AE3009377300AA6ACB /* yxapi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = yxapi.swift; sourceTree = "<group>"; };
 		30F97E1B3008178C00B313FD /* YXMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YXMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30F97E203008178C00B313FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -57,10 +63,14 @@
 			children = (
 				30F97E273008179500B313FD /* MapVC.swift */,
 				30F026AE3009377300AA6ACB /* yxapi.swift */,
+				3008007D3014B9D6003D8E56 /* gps.swift */,
+				3008007F3014C117003D8E56 /* gps.h */,
+				300800813014C161003D8E56 /* gps.m */,
 				30F97E293008181B00B313FD /* AppDelegate.swift */,
 				30F97E2D3008185D00B313FD /* Main.storyboard */,
 				30F97E2F3008186300B313FD /* Launch Screen.storyboard */,
 				30F97E203008178C00B313FD /* Assets.xcassets */,
+				300800803014C160003D8E56 /* YXMaps-Bridging-Header.h */,
 			);
 			path = YXMaps;
 			sourceTree = "<group>";
@@ -97,6 +107,7 @@
 				TargetAttributes = {
 					30F97E1A3008178C00B313FD = {
 						CreatedOnToolsVersion = 13.4.1;
+						LastSwiftMigration = 1320;
 					};
 				};
 			};
@@ -136,8 +147,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				300800823014C161003D8E56 /* gps.m in Sources */,
 				30F97E2A3008181B00B313FD /* AppDelegate.swift in Sources */,
 				30F026AF3009377300AA6ACB /* yxapi.swift in Sources */,
+				3008007E3014B9D6003D8E56 /* gps.swift in Sources */,
 				30F97E283008179500B313FD /* MapVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -264,10 +277,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YXMaps/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App needs location to show it on map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -278,6 +295,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.spytaspund.YXMaps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "YXMaps/YXMaps-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -288,10 +307,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YXMaps/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App needs location to show it on map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -302,6 +325,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.spytaspund.YXMaps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "YXMaps/YXMaps-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

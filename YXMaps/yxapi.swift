@@ -10,7 +10,7 @@ import UIKit
 
 struct yxURL {
     static func tile(x: Int, y: Int, z: Int) -> URL {
-        let urlString = "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x=\(x)&y=\(y)&z=\(z)&scale=2.0&lang=ru_RU"
+        let urlString = "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x=\(x)&y=\(y)&z=\(z)&scale=1.0&lang=ru_RU&scale=2.0"
         return URL(string: urlString)!
     }
     
@@ -35,31 +35,62 @@ struct yxCache {
 class yxapi {
     static let shared = yxapi()
     private var fileManager = FileManager.default
-    func downloadTile(x: Int, y: Int, z: Int, completion: @escaping (UIImage?) -> Void) {
+    private var queue = DispatchQueue(label: "com.yxmaps.tileQueue", attributes: .concurrent)
+    private var activeRequests = Set<String>()
+    
+    func downloadTile(x: Int, y: Int, z: Int, completion: @escaping (CGImage) -> Void) -> CGImage? {
         let cachePath = yxCache.tile(x: x, y: y, z: z)
         
-        if fileManager.fileExists(atPath: cachePath) {
-            completion(UIImage(contentsOfFile: cachePath))
-        } else {
-            NSURLConnection.sendAsynchronousRequest(URLRequest(url: yxURL.tile(x: x, y: y, z: z)), queue: .main) { response, data, error in
-                let httpResponse = response as? HTTPURLResponse
-                print("REQUESTIN TILE AT \(x), \(y), \(z)")
-                if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData) {
-                    self.cacheTile(tile: image, x: x, y: y, z: z)
-                    completion(image)
-                } else {
-                    print("OH NO TILE RIP AAAA!!")
-                    print("STATUS CODE IZ \(httpResponse?.statusCode ?? 676767)")
-                    completion(nil)
-                }
+        // checking disk cache
+        if fileManager.fileExists(atPath: cachePath), let image = UIImage(contentsOfFile: cachePath), let cgImage = image.cgImage {
+            return cgImage
+        }
+        
+        // queue thingies; needed becuase otherwise tiles will be redownloaded every N ms.
+        let tileID = "\(z)_\(x)_\(y)"
+        var shouldDownload = false
+        queue.sync(flags: .barrier) {
+            if !activeRequests.contains(tileID) {
+                activeRequests.insert(tileID)
+                shouldDownload = true
             }
         }
+        
+        guard shouldDownload else { return nil }
+        
+        let url = yxURL.tile(x: x, y: y, z: z)
+        let request = URLRequest(url: url)
+        print("REQUESTIN URL: \(url.absoluteString)")
+        
+        NSURLConnection.sendAsynchronousRequest(request, queue: .main) { [weak self] response, data, error in
+            self?.queue.async(flags: .barrier) {
+                self?.activeRequests.remove(tileID)
+            }
+            let httpResponse = response as? HTTPURLResponse
+            print("COORDZ \(z), \(x), \(y)")
+            print("STATUS CODE IZ \(httpResponse?.statusCode ?? 676767)")
+            if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData), let cgImage = image.cgImage {
+                self?.cacheTile(data: imgData, x: x, y: y, z: z)
+                completion(cgImage)
+            } else {
+                print("OH NO TILE RIP AAAA!!")
+            }
+        }
+        return nil
     }
     
-    func cacheTile(tile: UIImage, x: Int, y: Int, z: Int) {
-        DispatchQueue.global(priority: .low).async {
-            if let imgData = tile.pngData() {
-                (imgData as NSData).write(to: URL(string: yxCache.tile(x: x, y: y, z: z))!, atomically: true)
+    func cacheTile(data: Data, x: Int, y: Int, z: Int) {
+        DispatchQueue.global(priority: .background).async {
+            let cachePath = yxCache.tile(x: x, y: y, z: z)
+            let nsCachePath = cachePath as NSString
+            let url = URL(fileURLWithPath: cachePath)
+            let directoryPath = nsCachePath.deletingLastPathComponent
+            do {
+                try FileManager.default.createDirectory(atPath: directoryPath, withIntermediateDirectories: true, attributes: nil)
+                try data.write(to: url, options: .atomic)
+            } catch {
+                print("OH NO TILE IS NOT VALID SHIT SHIT AAAA!!")
+                print("ERROR DISCRIPTZ:: \(error.localizedDescription)")
             }
         }
     }
