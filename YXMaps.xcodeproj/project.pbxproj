@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		3008007E3014B9D6003D8E56 /* gps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3008007D3014B9D6003D8E56 /* gps.swift */; };
 		300800823014C161003D8E56 /* gps.m in Sources */ = {isa = PBXBuildFile; fileRef = 300800813014C161003D8E56 /* gps.m */; };
+		30C7EDBA301E2C2800877A72 /* SettingsCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C7EDB9301E2C2800877A72 /* SettingsCells.swift */; };
+		30C7EDBC301E30F300877A72 /* theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C7EDBB301E30F300877A72 /* theme.swift */; };
+		30D6381E301D11AC00E0BEB8 /* mapCA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D6381D301D11AC00E0BEB8 /* mapCA.swift */; };
+		30D63820301D135C00E0BEB8 /* ui.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D6381F301D135C00E0BEB8 /* ui.swift */; };
+		30D63822301D2BFD00E0BEB8 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */; };
 		30F026AF3009377300AA6ACB /* yxapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F026AE3009377300AA6ACB /* yxapi.swift */; };
 		30F97E213008178C00B313FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30F97E203008178C00B313FD /* Assets.xcassets */; };
 		30F97E283008179500B313FD /* MapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F97E273008179500B313FD /* MapVC.swift */; };
@@ -22,6 +27,11 @@
 		3008007F3014C117003D8E56 /* gps.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gps.h; sourceTree = "<group>"; };
 		300800803014C160003D8E56 /* YXMaps-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YXMaps-Bridging-Header.h"; sourceTree = "<group>"; };
 		300800813014C161003D8E56 /* gps.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = gps.m; sourceTree = "<group>"; };
+		30C7EDB9301E2C2800877A72 /* SettingsCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsCells.swift; sourceTree = "<group>"; };
+		30C7EDBB301E30F300877A72 /* theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = theme.swift; sourceTree = "<group>"; };
+		30D6381D301D11AC00E0BEB8 /* mapCA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mapCA.swift; sourceTree = "<group>"; };
+		30D6381F301D135C00E0BEB8 /* ui.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ui.swift; sourceTree = "<group>"; };
+		30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		30F026AE3009377300AA6ACB /* yxapi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = yxapi.swift; sourceTree = "<group>"; };
 		30F97E1B3008178C00B313FD /* YXMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YXMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30F97E203008178C00B313FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -71,6 +81,11 @@
 				30F97E2F3008186300B313FD /* Launch Screen.storyboard */,
 				30F97E203008178C00B313FD /* Assets.xcassets */,
 				300800803014C160003D8E56 /* YXMaps-Bridging-Header.h */,
+				30D6381D301D11AC00E0BEB8 /* mapCA.swift */,
+				30D6381F301D135C00E0BEB8 /* ui.swift */,
+				30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */,
+				30C7EDB9301E2C2800877A72 /* SettingsCells.swift */,
+				30C7EDBB301E30F300877A72 /* theme.swift */,
 			);
 			path = YXMaps;
 			sourceTree = "<group>";
@@ -85,6 +100,7 @@
 				30F97E173008178C00B313FD /* Sources */,
 				30F97E183008178C00B313FD /* Frameworks */,
 				30F97E193008178C00B313FD /* Resources */,
+				30C7663A301F8AD200F3ADD7 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -142,6 +158,26 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		30C7663A301F8AD200F3ADD7 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "find \"$SRCROOT/$PRODUCT_NAME/Assets.xcassets\" -name \"*.png\" -exec cp {} \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/\" \\;\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		30F97E173008178C00B313FD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -151,7 +187,12 @@
 				30F97E2A3008181B00B313FD /* AppDelegate.swift in Sources */,
 				30F026AF3009377300AA6ACB /* yxapi.swift in Sources */,
 				3008007E3014B9D6003D8E56 /* gps.swift in Sources */,
+				30D6381E301D11AC00E0BEB8 /* mapCA.swift in Sources */,
+				30D63820301D135C00E0BEB8 /* ui.swift in Sources */,
 				30F97E283008179500B313FD /* MapVC.swift in Sources */,
+				30C7EDBC301E30F300877A72 /* theme.swift in Sources */,
+				30C7EDBA301E2C2800877A72 /* SettingsCells.swift in Sources */,
+				30D63822301D2BFD00E0BEB8 /* SettingsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

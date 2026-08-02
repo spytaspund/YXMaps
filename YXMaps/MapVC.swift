@@ -12,17 +12,42 @@ import CoreText
 
 class mapViewController: UIViewController, UIScrollViewDelegate {
     @IBOutlet weak var scrollView: UIScrollView!
+    @IBOutlet weak var searchBar: UIView!
+    @IBOutlet weak var settingsBtn: UIButton!
+    @IBOutlet weak var locationBtn: UIButton!
+    @IBOutlet weak var searchField: UITextField!
+    
     private var gpsMgr = swiftGPS()
     var mapLayer: mapCA!
     
     private var locationDotView: UIView?
     private var isInitialLayoutDone = false
+    private var currentLat: Double?
+    private var currentLon: Double?
+    
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         scrollView.delegate = self
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(themeChanged),
+            name: Notification.Name("themeChanged"),
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(mapTypeChanged),
+            name: Notification.Name("mapTypeChanged"),
+            object: nil
+        )
+        
+        searchBar.layer.cornerRadius = 8
+        searchBar.clipsToBounds = true // ^ somehow doesn't work without it
         
         let tiledFrame = CGRect(origin: .zero, size: mapSize)
         
@@ -42,33 +67,14 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         
         gpsMgr.onGPSUpdate = { [weak self] lat, lon in
             guard let self = self else { return }
-            let coords = self.tranformCoordinate(lat, lon, withZoom: 17)
-            let pixelX = CGFloat(coords.x * 256)
-            let pixelY = CGFloat(coords.y * 256)
-            let dotPos = CGPoint(x: pixelX, y: pixelY)
             
-            if self.locationDotView == nil {
-                let size: CGFloat = 20.0
-                let dot = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
-                dot.backgroundColor = UIColor(red: 1.0, green: 0.27, blue: 0.2, alpha: 1.0)
-                dot.layer.cornerRadius = size / 2.0
-                dot.layer.borderColor = UIColor.white.cgColor
-                dot.layer.borderWidth = 4
-                
-                dot.layer.shadowColor = UIColor.black.cgColor
-                dot.layer.shadowOffset = CGSize(width: 0, height: 2)
-                dot.layer.shadowOpacity = 0.3
-                dot.layer.shadowRadius = 2.0
-                
-                self.mapLayer.addSubview(dot)
-                self.locationDotView = dot
-            }
-            self.locationDotView?.center = dotPos
-            self.updateDotScale()
+            self.currentLat = lat
+            self.currentLon = lon
+            self.updateDotLocation(lat: lat, lon: lon)
             
             if !self.isInitialLayoutDone {
                 self.isInitialLayoutDone = true
-                self.gotoCoords(lat: lat, lon: lon)
+                self.gotoGPS()
             }
         }
         gpsMgr.startTracking()
@@ -82,6 +88,52 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         calculateMinZoom()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        applyTheme(themeChanged: false)
+    }
+    
+    @objc func themeChanged() {
+        applyTheme(themeChanged: true)
+    }
+    
+    private func applyTheme(themeChanged: Bool) {
+        let isDark = theme.shared.selectedTheme == .dark
+        searchBar.addBlur(isDark: isDark, tag: 4039)
+        
+        // colors are automatically adjusted by palette
+        searchField.backgroundColor = palette.secondaryBackground
+        searchField.textColor = palette.textColor
+        settingsBtn.backgroundColor = palette.secondaryBackground
+        settingsBtn.setImage(UIImage(named: "gear-\(isDark ? "dark" : "light")"), for: .normal)
+        locationBtn.backgroundColor = palette.secondaryBackground
+        locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
+        
+        if let map = mapLayer, themeChanged {
+            map.reloadMap()
+        }
+    }
+    
+    @objc private func mapTypeChanged() {
+        guard let map = mapLayer else { return }
+        map.reloadMap()
+    }
+    
+    @IBAction func settingsButtonTapped(_ sender: UIButton) {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let navVC = storyboard.instantiateViewController(withIdentifier: "SettingsNavVC") as? UINavigationController else { return }
+        
+        navVC.modalPresentationStyle = .formSheet
+        navVC.modalTransitionStyle = .coverVertical
+        
+        self.present(navVC, animated: true, completion: nil)
+    }
+    
+    @IBAction func locationButtonTapped(_ sender: UIButton) {
+        gotoGPS()
+    }
+    
+    // MARK: Map things
     private func calculateMinZoom() {
         guard scrollView != nil && scrollView.bounds.width > 0 && scrollView.bounds.height > 0 else { return }
         
@@ -113,35 +165,36 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         dot.transform = CGAffineTransform(scaleX: 1.0 / currentZoom, y: 1.0 / currentZoom)
     }
     
-    // c++ func found on yx forums translated to swift
-    func tranformCoordinate(_ latitude: Double, _ longitude: Double, withZoom zoom: Int) -> (x: Int, y: Int) {
-        let latRad = latitude * Double.pi / 180.0
-        let lonRad = longitude * Double.pi / 180.0
+    private func updateDotLocation(lat: Double, lon: Double) {
+        let coords = gpsMgr.tranformCoordinate(lat, lon, withZoom: 17)
+        let pixelX = CGFloat(coords.x * 256)
+        let pixelY = CGFloat(coords.y * 256)
+        let dotPos = CGPoint(x: pixelX, y: pixelY)
         
-        let a: Double = 6378137
-        let k: Double = 0.0818191908426
-        let zoomPow = pow(2.0, Double(23 - zoom))
+        if locationDotView == nil {
+            let size: CGFloat = 20.0
+            let dot = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+            dot.backgroundColor = UIColor(red: 1.0, green: 0.27, blue: 0.2, alpha: 1.0)
+            dot.layer.cornerRadius = size / 2.0
+            dot.layer.borderColor = UIColor.white.cgColor
+            dot.layer.borderWidth = 4
+            
+            dot.layer.shadowColor = UIColor.black.cgColor
+            dot.layer.shadowOffset = CGSize(width: 0, height: 2)
+            dot.layer.shadowOpacity = 0.3
+            dot.layer.shadowRadius = 2.0
+            
+            mapLayer.addSubview(dot)
+            locationDotView = dot
+        }
         
-        let pixX = round((20037508.342789 + a * lonRad) * 53.5865938 / zoomPow)
-        let tileX = Int(pixX) / 256
-        
-        let sinLat = sin(latRad)
-        let asinPart = asin(k * sinLat)
-        
-        let tanNum = tan(Double.pi / 4.0 + latRad / 2.0)
-        let tanDen = tan(Double.pi / 4.0 + asinPart / 2.0)
-        
-        let z1 = tanNum / pow(tanDen, k)
-        
-        let pixY = round((20037508.342789 - a * log(z1)) * 53.5865938 / zoomPow)
-        let tileY = Int(pixY) / 256
-        
-        return (tileX, tileY)
+        locationDotView?.center = dotPos
+        updateDotScale()
     }
     
-    func gotoCoords(lat: Double, lon: Double) {
+    private func gotoCoords(lat: Double, lon: Double, animated: Bool) {
         print("FOUND IT!! Lat: \(lat), Lon: \(lon)")
-        let coords = self.tranformCoordinate(lat, lon, withZoom: 17)
+        let coords = gpsMgr.tranformCoordinate(lat, lon, withZoom: 17)
         let pixelX = CGFloat(coords.x * 256)
         let pixelY = CGFloat(coords.y * 256)
         let targetOffset = CGPoint(
@@ -149,66 +202,11 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
             y: pixelY - (scrollView.bounds.height / 2)
         )
         scrollView.zoomScale = 1.0
-        scrollView.setContentOffset(targetOffset, animated: false)
-    }
-}
-
-class mapCA: UIView {
-    let tileSize = CGSize(width: 512, height: 512) // this is awkard; needs to work with 256x256, but it does some weird shit with that size, so I need to use scale=2.0 + size=512x512
-    let lods = 18
-    let lodBias = 0
-    
-    override class var layerClass: AnyClass {
-        return CATiledLayer.self
+        scrollView.setContentOffset(targetOffset, animated: animated)
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupTiledLayer()
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupTiledLayer()
-    }
-    
-    private func setupTiledLayer() {
-        let lr = self.layer as! CATiledLayer
-        lr.tileSize = tileSize
-        lr.levelsOfDetail = lods
-        lr.levelsOfDetailBias = lodBias
-    }
-    
-    override func draw(_ layer: CALayer, in ctx: CGContext) {
-        let scale = ctx.ctm.a / layer.contentsScale // stupid retina displays
-        let rect = ctx.boundingBoxOfClipPath
-        
-        let maxZoom = 17
-        let z = max(0, min(maxZoom, maxZoom + Int(round(log2(scale)))))
-        
-        let tileSizeAtCurrentScale = 256.0 / scale
-        let x = Int(rect.origin.x / tileSizeAtCurrentScale)
-        let y = Int(rect.origin.y / tileSizeAtCurrentScale)
-        
-        let cachedTile = yxapi.shared.downloadTile(x: x, y: y, z: z) { [weak layer] downloadedTile in
-            // Runs if tile is NOT cached and downloaded from server
-            layer?.setNeedsDisplay(rect)
-        }
-        
-        guard let tile = cachedTile else {
-            // nil received - either tile is downloading, or there's API error.
-            ctx.setFillColor(UIColor(white: 0.88, alpha: 1.0).cgColor)
-            ctx.fill(rect)
-            return
-        }
-        
-        ctx.saveGState()
-        ctx.translateBy(x: rect.origin.x, y: rect.origin.y + rect.size.height)
-        ctx.scaleBy(x: 1.0, y: -1.0)
-        
-        let localRect = CGRect(x: 0, y: 0, width: rect.size.width, height: rect.size.height)
-        ctx.draw(tile, in: localRect)
-        
-        ctx.restoreGState()
+    private func gotoGPS() {
+        guard let lat = currentLat, let lon = currentLon else { return }
+        gotoCoords(lat: lat, lon: lon, animated: true)
     }
 }

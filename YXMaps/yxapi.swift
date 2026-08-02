@@ -9,8 +9,8 @@ import Foundation
 import UIKit
 
 struct yxURL {
-    static func tile(x: Int, y: Int, z: Int) -> URL {
-        let urlString = "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x=\(x)&y=\(y)&z=\(z)&scale=1.0&lang=ru_RU&scale=2.0"
+    static func tile(x: Int, y: Int, z: Int, scale: CGFloat, isDark: Bool) -> URL {
+        let urlString = "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x=\(x)&y=\(y)&z=\(z)&scale=\(scale)&theme=\(isDark ? "dark" : "light")&lang=ru_RU"
         return URL(string: urlString)!
     }
     
@@ -23,12 +23,22 @@ struct yxURL {
         let urlString = "https://core-renderer-tiles.maps.yandex.net/tiles?l=skl&x=\(x)&y=\(y)&z=\(z)&scale=1&lang=ru_RU"
         return URL(string: urlString)!
     }
+    
+    static func geoSuggest(query: String, lat: Double, lon: Double) -> URL {
+        let urlString = "https://suggest-maps.yandex.ru/suggest-geo?part=\(query)&ll\(lon),\(lat)&outformat=json&v=9&lang=ru_RU"
+        return URL(string: urlString)!
+    }
 }
 
 struct yxCache {
-    static func tile(x: Int, y: Int, z: Int) -> String {
+    static func tile(x: Int, y: Int, z: Int, isDark: Bool) -> String {
         let cacheDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
-        return (cacheDir as NSString).appendingPathComponent("yxTiles/\(z)/\(x)/\(y).png")
+        return (cacheDir as NSString).appendingPathComponent("yxTiles/\(isDark ? "dark" : "light")/\(z)/\(x)/\(y).png")
+    }
+    
+    static func satTile(x: Int, y: Int, z: Int) -> String {
+        let cacheDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        return (cacheDir as NSString).appendingPathComponent("yxTiles/satellite/\(z)/\(x)/\(y).png")
     }
 }
 
@@ -38,8 +48,11 @@ class yxapi {
     private var queue = DispatchQueue(label: "com.yxmaps.tileQueue", attributes: .concurrent)
     private var activeRequests = Set<String>()
     
-    func downloadTile(x: Int, y: Int, z: Int, completion: @escaping (CGImage) -> Void) -> CGImage? {
-        let cachePath = yxCache.tile(x: x, y: y, z: z)
+    func downloadTile(x: Int, y: Int, z: Int, scale: CGFloat, isDark: Bool, isSat: Bool, completion: @escaping (CGImage) -> Void) -> CGImage? {
+        var cachePath: String {
+            if isSat { return yxCache.satTile(x: x, y: y, z: z)}
+            else { return yxCache.tile(x: x, y: y, z: z, isDark: isDark)}
+        }
         
         // checking disk cache
         if fileManager.fileExists(atPath: cachePath), let image = UIImage(contentsOfFile: cachePath), let cgImage = image.cgImage {
@@ -58,7 +71,10 @@ class yxapi {
         
         guard shouldDownload else { return nil }
         
-        let url = yxURL.tile(x: x, y: y, z: z)
+        var url: URL {
+            if isSat { return yxURL.satTile(x: x, y: y, z: z) }
+            else { return yxURL.tile(x: x, y: y, z: z, scale: scale, isDark: isDark) }
+        }
         let request = URLRequest(url: url)
         print("REQUESTIN URL: \(url.absoluteString)")
         
@@ -70,7 +86,7 @@ class yxapi {
             print("COORDZ \(z), \(x), \(y)")
             print("STATUS CODE IZ \(httpResponse?.statusCode ?? 676767)")
             if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData), let cgImage = image.cgImage {
-                self?.cacheTile(data: imgData, x: x, y: y, z: z)
+                self?.cacheTile(data: imgData, x: x, y: y, z: z, isDark: isDark, isSat: isSat)
                 completion(cgImage)
             } else {
                 print("OH NO TILE RIP AAAA!!")
@@ -79,9 +95,12 @@ class yxapi {
         return nil
     }
     
-    func cacheTile(data: Data, x: Int, y: Int, z: Int) {
+    func cacheTile(data: Data, x: Int, y: Int, z: Int, isDark: Bool, isSat: Bool) {
         DispatchQueue.global(priority: .background).async {
-            let cachePath = yxCache.tile(x: x, y: y, z: z)
+            var cachePath: String {
+                if isSat { return yxCache.satTile(x: x, y: y, z: z)}
+                else { return yxCache.tile(x: x, y: y, z: z, isDark: isDark)}
+            }
             let nsCachePath = cachePath as NSString
             let url = URL(fileURLWithPath: cachePath)
             let directoryPath = nsCachePath.deletingLastPathComponent
