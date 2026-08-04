@@ -14,6 +14,7 @@
 		30D6381E301D11AC00E0BEB8 /* mapCA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D6381D301D11AC00E0BEB8 /* mapCA.swift */; };
 		30D63820301D135C00E0BEB8 /* ui.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D6381F301D135C00E0BEB8 /* ui.swift */; };
 		30D63822301D2BFD00E0BEB8 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */; };
+		30EEDB1D302236F3005F32CB /* SuggestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EEDB1C302236F3005F32CB /* SuggestCell.swift */; };
 		30F026AF3009377300AA6ACB /* yxapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F026AE3009377300AA6ACB /* yxapi.swift */; };
 		30F97E213008178C00B313FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30F97E203008178C00B313FD /* Assets.xcassets */; };
 		30F97E283008179500B313FD /* MapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F97E273008179500B313FD /* MapVC.swift */; };
@@ -32,6 +33,7 @@
 		30D6381D301D11AC00E0BEB8 /* mapCA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mapCA.swift; sourceTree = "<group>"; };
 		30D6381F301D135C00E0BEB8 /* ui.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ui.swift; sourceTree = "<group>"; };
 		30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		30EEDB1C302236F3005F32CB /* SuggestCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestCell.swift; sourceTree = "<group>"; };
 		30F026AE3009377300AA6ACB /* yxapi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = yxapi.swift; sourceTree = "<group>"; };
 		30F97E1B3008178C00B313FD /* YXMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YXMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30F97E203008178C00B313FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 				30D63821301D2BFD00E0BEB8 /* SettingsViewController.swift */,
 				30C7EDB9301E2C2800877A72 /* SettingsCells.swift */,
 				30C7EDBB301E30F300877A72 /* theme.swift */,
+				30EEDB1C302236F3005F32CB /* SuggestCell.swift */,
 			);
 			path = YXMaps;
 			sourceTree = "<group>";
@@ -186,6 +189,7 @@
 				300800823014C161003D8E56 /* gps.m in Sources */,
 				30F97E2A3008181B00B313FD /* AppDelegate.swift in Sources */,
 				30F026AF3009377300AA6ACB /* yxapi.swift in Sources */,
+				30EEDB1D302236F3005F32CB /* SuggestCell.swift in Sources */,
 				3008007E3014B9D6003D8E56 /* gps.swift in Sources */,
 				30D6381E301D11AC00E0BEB8 /* mapCA.swift in Sources */,
 				30D63820301D135C00E0BEB8 /* ui.swift in Sources */,

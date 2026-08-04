@@ -10,12 +10,16 @@ import UIKit
 import QuartzCore
 import CoreText
 
-class mapViewController: UIViewController, UIScrollViewDelegate {
+class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource {
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var searchBar: UIView!
     @IBOutlet weak var settingsBtn: UIButton!
     @IBOutlet weak var locationBtn: UIButton!
     @IBOutlet weak var searchField: UITextField!
+    @IBOutlet weak var resultsTable: UITableView!
+    
+    @IBOutlet weak var searchBarHeight: NSLayoutConstraint!
+    @IBOutlet weak var searchBarBottomPhone: NSLayoutConstraint!
     
     private var gpsMgr = swiftGPS()
     var mapLayer: mapCA!
@@ -24,6 +28,8 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     private var isInitialLayoutDone = false
     private var currentLat: Double?
     private var currentLon: Double?
+    
+    let suggestCellID = "suggestCell"
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -43,6 +49,20 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
             self,
             selector: #selector(mapTypeChanged),
             name: Notification.Name("mapTypeChanged"),
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
         
@@ -79,6 +99,27 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         }
         gpsMgr.startTracking()
         
+        if #available(iOS 7.0, *) {
+            resultsTable.contentInset = UIEdgeInsets(top: 64, left: 0, bottom: 0, right: 0)
+            resultsTable.scrollIndicatorInsets = UIEdgeInsets(top: 64, left: 0, bottom: 0, right: 0)
+        } else {
+            resultsTable.contentInset = .zero
+            resultsTable.scrollIndicatorInsets = .zero
+        }
+        
+        resultsTable.delegate = self
+        resultsTable.dataSource = self
+        resultsTable.register(suggestCell.self, forCellReuseIdentifier: suggestCellID)
+        resultsTable.tableFooterView = UIView()
+        
+        yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
+            if let jsonchik = json {
+                print("YEA GUD!!")
+                print("JSONIN: \(jsonchik)")
+            } else {
+                print("FUCK U!!!")
+            }
+        }
         print("yeah im loaded bruv")
     }
     
@@ -91,6 +132,61 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         applyTheme(themeChanged: false)
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int { return 1 }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return 2 }
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 150 }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.row == 0 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
+            cell.updateColors()
+            cell.heading.text = "Placeholder"
+            cell.subtitle.text = "Yeah it is a very very long message to test how much words this table cell can handle woohoo! woohoo! yayayayayay!!"
+            return cell
+        }
+        return UITableViewCell()
+    }
+    
+    @objc func keyboardWillShow(notification: NSNotification) {
+        guard let userInfo = notification.userInfo,
+              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue,
+              let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+              let curve = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt else { return }
+        
+        let keyboardHeight = keyboardFrame.cgRectValue.height
+        let options = UIView.AnimationOptions(rawValue: curve << 16)
+        let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+        UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
+            var height = self.view.bounds.height - keyboardHeight - 36
+            if isPhone {
+                self.settingsBtn.alpha = 0.0
+                self.locationBtn.alpha = 0.0
+                self.searchBarBottomPhone.constant = keyboardHeight + 8
+            } else { height -= self.searchBar.frame.origin.y }
+            self.searchBarHeight.constant = height
+            self.view.layoutIfNeeded()
+        }, completion: nil)
+    }
+    
+    @objc func keyboardWillHide(notification: NSNotification) {
+        guard let userInfo = notification.userInfo,
+              let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+              let curve = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt,
+              (searchField.text?.isEmpty ?? true) else { return } // if field isn't empty - don't hide tableview
+        
+        let options = UIView.AnimationOptions(rawValue: curve << 16)
+        let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+        UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
+            if isPhone {
+                self.settingsBtn.alpha = 1.0
+                self.locationBtn.alpha = 1.0
+                self.searchBarBottomPhone.constant = 8
+            }
+            self.searchBarHeight.constant = 48
+            self.view.layoutIfNeeded()
+        }, completion: nil)
     }
     
     @objc func themeChanged() {
@@ -108,6 +204,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         settingsBtn.setImage(UIImage(named: "gear-\(isDark ? "dark" : "light")"), for: .normal)
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
+        resultsTable.backgroundColor = palette.backgroundColor
         
         if let map = mapLayer, themeChanged {
             map.reloadMap()
@@ -134,6 +231,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     }
     
     // MARK: Map things
+    
     private func calculateMinZoom() {
         guard scrollView != nil && scrollView.bounds.width > 0 && scrollView.bounds.height > 0 else { return }
         

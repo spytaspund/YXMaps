@@ -81,4 +81,14 @@ struct palette {
             return theme.shared.selectedTheme == .dark ? UIColor(white: 0.117, alpha: 1.0) : .white
         }
     }
+    
+    static var secondaryLabel: UIColor {
+        if #available(iOS 13.0, *) {
+            return UIColor { trait in
+                trait.userInterfaceStyle == .dark ? UIColor(white: 0.95, alpha: 0.6) : UIColor(white: 0.25, alpha: 0.6)
+            }
+        } else {
+            return theme.shared.selectedTheme == .dark ? UIColor(white: 0.95, alpha: 0.6) : UIColor(white: 0.25, alpha: 0.6)
+        }
+    }
 }
