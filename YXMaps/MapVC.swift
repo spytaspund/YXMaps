@@ -102,17 +102,11 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         }
         gpsMgr.startTracking()
         
-        if #available(iOS 7.0, *) {
-            resultsTable.contentInset = UIEdgeInsets(top: 64, left: 0, bottom: 0, right: 0)
-            resultsTable.scrollIndicatorInsets = UIEdgeInsets(top: 64, left: 0, bottom: 0, right: 0)
-        } else {
-            resultsTable.contentInset = .zero
-            resultsTable.scrollIndicatorInsets = .zero
-        }
-        
         resultsTable.delegate = self
         resultsTable.dataSource = self
         resultsTable.register(suggestCell.self, forCellReuseIdentifier: suggestCellID)
+        resultsTable.contentInset = .zero
+        resultsTable.scrollIndicatorInsets = .zero
         resultsTable.tableFooterView = UIView()
         
         /*yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
@@ -144,9 +138,11 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
         let result = suggestResults[indexPath.row]
+        let isDark = theme.shared.selectedTheme == .dark
+        let tag = result.tags.first ?? "locality"
         
+        cell.iconName = tag.toIconName(isDark: isDark)
         cell.updateColors()
-        
         cell.heading.text = result.title.text
         cell.subtitle.text = result.subtitle.text
         cell.distance.text = result.distance.text
@@ -160,17 +156,24 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
               let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
               let curve = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt else { return }
         
-        let keyboardHeight = keyboardFrame.cgRectValue.height
+        let rawFrame = keyboardFrame.cgRectValue
+        let frame = view.convert(rawFrame, from: nil)
+        let keyboardHeight = frame.height
+        
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+        
         UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
-            var height = self.view.bounds.height - keyboardHeight - 36
             if isPhone {
                 self.settingsBtn.alpha = 0.0
                 self.locationBtn.alpha = 0.0
                 self.searchBarBottomPhone.constant = keyboardHeight + 8
-            } else { height -= self.searchBar.frame.origin.y }
-            self.searchBarHeight.constant = height
+                self.searchBarHeight.constant = self.view.bounds.height - keyboardHeight - 40
+            } else { // iPad
+                let searchBarY = self.searchBar.frame.origin.y
+                let height = self.view.bounds.height - keyboardHeight - searchBarY - 16
+                self.searchBarHeight.constant = max(48, height)
+            }
             self.view.layoutIfNeeded()
         }, completion: nil)
     }
@@ -197,7 +200,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     @objc func searchQueryChanged(_ textField: UITextField) {
         guard let query = textField.text else { return }
         yxapi.shared.suggest(query: query, lat: 38.5, lon: 55.5) { results in
-            print("GOT REZULTZZZ!!")
             if let suggestResults = results {
                 self.suggestResults = suggestResults
                 DispatchQueue.main.async {
@@ -223,6 +225,10 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
         resultsTable.backgroundColor = palette.backgroundColor
+        resultsTable.separatorColor = palette.secondaryLabel
+        DispatchQueue.main.async {
+            self.resultsTable.reloadData()
+        }
         
         if let map = mapLayer, themeChanged {
             map.reloadMap()

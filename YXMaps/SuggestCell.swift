@@ -15,6 +15,8 @@ class suggestCell: UITableViewCell {
     let subtitle = UILabel()
     let distance = UILabel()
     
+    var iconName = "locality-light"
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         initUI()
@@ -42,7 +44,7 @@ class suggestCell: UITableViewCell {
         iconContainer.layer.cornerRadius = 8
         iconContainer.backgroundColor = palette.backgroundColor
         icon.backgroundColor = .clear
-        icon.image = UIImage(named: "locality-light")
+        icon.image = UIImage(named: iconName)
         
         self.addSubview(heading)
         self.addSubview(subtitle)
@@ -100,7 +102,7 @@ class suggestCell: UITableViewCell {
     
     func updateColors() {
         self.backgroundColor = palette.secondaryBackground
-        icon.image = UIImage(named: "locality-\(theme.shared.selectedTheme == .dark ? "dark" : "light")")
+        icon.image = UIImage(named: iconName)
         iconContainer.backgroundColor = palette.backgroundColor
         heading.textColor = palette.textColor
         subtitle.textColor = palette.secondaryLabel

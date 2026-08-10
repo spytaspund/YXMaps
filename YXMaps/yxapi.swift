@@ -26,6 +26,7 @@ struct yxURL {
     
     static func geoSuggest(query: String, lat: Double, lon: Double) -> URL {
         let urlString = "https://suggest-maps.yandex.ru/suggest-geo?part=\(query.encodeForJS())&ll=\(lon),\(lat)&outformat=json&v=9&lang=ru_RU"
+        print("DEBUG SUGGEST URL: \(urlString)")
         return URL(string: urlString)!
     }
 }
@@ -50,6 +51,7 @@ struct yxData {
         let title: suggestTitle
         let subtitle: suggestTitle
         let distance: suggestDistance
+        let tags: [String]
     }
     
     struct suggestTitle: Decodable { let text: String }
@@ -351,5 +353,14 @@ extension String {
                 return String(format: "%%%02X", byte)
             }
         }.joined()
+    }
+    
+    func toIconName(isDark: Bool) -> String {
+        let slug = self.lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "-")
+        
+        let suffix = isDark ? "-dark" : "-light"
+        return "\(slug)\(suffix)"
     }
 }
