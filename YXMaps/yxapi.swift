@@ -25,7 +25,7 @@ struct yxURL {
     }
     
     static func geoSuggest(query: String, lat: Double, lon: Double) -> URL {
-        let urlString = "https://suggest-maps.yandex.ru/suggest-geo?part=\(query)&ll=\(lon),\(lat)&outformat=json&v=9&lang=ru_RU"
+        let urlString = "https://suggest-maps.yandex.ru/suggest-geo?part=\(query.encodeForJS())&ll=\(lon),\(lat)&outformat=json&v=9&lang=ru_RU"
         return URL(string: urlString)!
     }
 }
@@ -39,6 +39,23 @@ struct yxCache {
     static func satTile(x: Int, y: Int, z: Int) -> String {
         let cacheDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
         return (cacheDir as NSString).appendingPathComponent("yxTiles/satellite/\(z)/\(x)/\(y).png")
+    }
+}
+
+struct yxData {
+    struct suggestData: Decodable { let results: [suggestResult] }
+    
+    struct suggestResult: Decodable {
+        let type: String
+        let title: suggestTitle
+        let subtitle: suggestTitle
+        let distance: suggestDistance
+    }
+    
+    struct suggestTitle: Decodable { let text: String }
+    struct suggestDistance: Decodable {
+        let value: Float
+        let text: String
     }
 }
 
@@ -228,6 +245,28 @@ class yxapi {
                 completion(json)
             } else {
                 completion(nil)
+            }
+        }
+    }
+    
+    func suggest(query: String, lat: Double, lon: Double, completion: @escaping ([yxData.suggestResult]?) -> Void) {
+        let url = yxURL.geoSuggest(query: query, lat: lat, lon: lon)
+        let request = URLRequest(url: url)
+        
+        NSURLConnection.sendAsynchronousRequest(request, queue: .main) { response, data, error in
+            if error == nil, let rawJSON = data {
+                print("DEBUGI JSONCHIK!: \(String(data: rawJSON, encoding: .utf8) ?? "blya ya hz chet")")
+                do {
+                    let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
+                    let results = try decoder.decode(yxData.suggestData.self, from: rawJSON)
+                    let suggestArray = results.results
+                    completion(suggestArray)
+                } catch {
+                    print("JSON DECODE ERROR!! \(error)")
+                }
+            } else {
+                print("SUGGEST NET ERRIR!! \(String(describing: error))")
             }
         }
     }

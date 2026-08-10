@@ -326,7 +326,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = YXMaps/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App needs location to show it on map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
@@ -356,7 +356,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = YXMaps/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App needs location to show it on map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";

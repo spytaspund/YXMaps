@@ -9,9 +9,11 @@ import Foundation
 import UIKit
 
 class suggestCell: UITableViewCell {
-    let iconView = UIImageView()
+    let iconContainer = UIView()
+    let icon = UIImageView()
     let heading = UILabel()
     let subtitle = UILabel()
+    let distance = UILabel()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -32,14 +34,21 @@ class suggestCell: UITableViewCell {
         subtitle.backgroundColor = .clear
         subtitle.font = UIFont.systemFont(ofSize: 15)
         subtitle.numberOfLines = 20
+        distance.textColor = palette.secondaryLabel
+        distance.backgroundColor = .clear
+        distance.textAlignment = .right
+        distance.font = UIFont.systemFont(ofSize: 15)
         
-        iconView.layer.cornerRadius = 4
-        iconView.backgroundColor = palette.backgroundColor
-        iconView.image = UIImage(named: "locality-light")
+        iconContainer.layer.cornerRadius = 8
+        iconContainer.backgroundColor = palette.backgroundColor
+        icon.backgroundColor = .clear
+        icon.image = UIImage(named: "locality-light")
         
-        self.addSubview(iconView)
         self.addSubview(heading)
         self.addSubview(subtitle)
+        self.addSubview(distance)
+        self.addSubview(iconContainer)
+        iconContainer.addSubview(icon)
     }
     
     override func layoutSubviews() {
@@ -48,34 +57,53 @@ class suggestCell: UITableViewCell {
         let cellWidth = contentView.bounds.width
         let cellHeight = contentView.bounds.height
         let padding = 8.0
+        let iconPadding = 6.0
         let iconSize = 30.0
+        let distanceWidth = 100.0
         
-        iconView.frame = CGRect(
+        iconContainer.frame = CGRect(
             x: padding,
             y: padding,
             width: iconSize,
             height: iconSize
         )
         
-        heading.frame = CGRect(
-            x: iconSize + padding*2,
+        icon.frame = CGRect(
+            x: iconPadding,
+            y: iconPadding,
+            width: iconSize - iconPadding*2,
+            height: iconSize - iconPadding*2
+        )
+        
+        distance.frame = CGRect(
+            x: cellWidth - distanceWidth - padding,
             y: padding,
-            width: cellWidth - iconSize - padding*3,
+            width: distanceWidth,
             height: 21
         )
         
+        let headingX = iconContainer.frame.maxX + padding
+
+        heading.frame = CGRect(
+            x: headingX,
+            y: padding,
+            width: distance.frame.minX - headingX - padding,
+            height: 21
+        )
         subtitle.frame = CGRect(
-            x: iconSize + padding*2,
-            y: 21 + padding,
-            width: cellWidth - iconSize - padding*3,
-            height: cellHeight - 21 - padding*3
+            x: headingX,
+            y: heading.frame.maxY + 4.0,
+            width: cellWidth - headingX - padding,
+            height: cellHeight - (heading.frame.maxY + 4) - padding
         )
     }
     
     func updateColors() {
         self.backgroundColor = palette.secondaryBackground
-        iconView.image = UIImage(named: "locality-\(theme.shared.selectedTheme == .dark ? "dark" : "light")")
+        icon.image = UIImage(named: "locality-\(theme.shared.selectedTheme == .dark ? "dark" : "light")")
+        iconContainer.backgroundColor = palette.backgroundColor
         heading.textColor = palette.textColor
         subtitle.textColor = palette.secondaryLabel
+        distance.textColor = palette.secondaryLabel
     }
 }

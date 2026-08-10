@@ -30,6 +30,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     private var currentLon: Double?
     
     let suggestCellID = "suggestCell"
+    var suggestResults: [yxData.suggestResult] = []
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -65,6 +66,8 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
+        
+        searchField.addTarget(self, action: #selector(searchQueryChanged(_:)), for: .editingChanged)
         
         searchBar.layer.cornerRadius = 8
         searchBar.clipsToBounds = true // ^ somehow doesn't work without it
@@ -112,14 +115,14 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         resultsTable.register(suggestCell.self, forCellReuseIdentifier: suggestCellID)
         resultsTable.tableFooterView = UIView()
         
-        yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
+        /*yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
             if let jsonchik = json {
                 print("YEA GUD!!")
                 print("JSONIN: \(jsonchik)")
             } else {
                 print("FUCK U!!!")
             }
-        }
+        }*/
         print("yeah im loaded bruv")
     }
     
@@ -135,18 +138,20 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     }
     
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return 2 }
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 150 }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return suggestResults.count }
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 60 }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.row == 0 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
-            cell.updateColors()
-            cell.heading.text = "Placeholder"
-            cell.subtitle.text = "Yeah it is a very very long message to test how much words this table cell can handle woohoo! woohoo! yayayayayay!!"
-            return cell
-        }
-        return UITableViewCell()
+        let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
+        let result = suggestResults[indexPath.row]
+        
+        cell.updateColors()
+        
+        cell.heading.text = result.title.text
+        cell.subtitle.text = result.subtitle.text
+        cell.distance.text = result.distance.text
+        
+        return cell
     }
     
     @objc func keyboardWillShow(notification: NSNotification) {
@@ -187,6 +192,19 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
             self.searchBarHeight.constant = 48
             self.view.layoutIfNeeded()
         }, completion: nil)
+    }
+    
+    @objc func searchQueryChanged(_ textField: UITextField) {
+        guard let query = textField.text else { return }
+        yxapi.shared.suggest(query: query, lat: 38.5, lon: 55.5) { results in
+            print("GOT REZULTZZZ!!")
+            if let suggestResults = results {
+                self.suggestResults = suggestResults
+                DispatchQueue.main.async {
+                    self.resultsTable.reloadData()
+                }
+            }
+        }
     }
     
     @objc func themeChanged() {
