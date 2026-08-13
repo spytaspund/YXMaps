@@ -56,21 +56,6 @@ class mapCA: UIView {
         
         guard let tile = cachedTile else {
             // nil received - either tile is downloading, or there's API error.
-            ctx.setFillColor(palette.secondaryBackground.cgColor)
-            ctx.fill(rect)
-            ctx.setFillColor(palette.secondaryLabel.cgColor)
-            
-            let step: CGFloat = 32.0
-                
-            var x = rect.minX
-            while x < rect.maxX {
-                var y = rect.minY
-                while y < rect.maxY {
-                    ctx.fill(CGRect(x: x, y: y, width: 2, height: 2))
-                    y += step
-                }
-                x += step
-            }
             return
         }
         

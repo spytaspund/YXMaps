@@ -31,6 +31,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     
     let suggestCellID = "suggestCell"
     var suggestResults: [yxData.suggestResult] = []
+    private var searchSymCount = 0
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -198,12 +199,19 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     }
     
     @objc func searchQueryChanged(_ textField: UITextField) {
-        guard let query = textField.text else { return }
-        yxapi.shared.suggest(query: query, lat: 38.5, lon: 55.5) { results in
-            if let suggestResults = results {
-                self.suggestResults = suggestResults
-                DispatchQueue.main.async {
-                    self.resultsTable.reloadData()
+        guard let query = textField.text, !query.isEmpty else { return }
+        
+        searchSymCount += 1
+        let currentCount = searchSymCount
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self, self.searchSymCount == currentCount else { return }
+            yxapi.shared.suggest(query: query, lat: 38.5, lon: 55.5) { results in
+                if let suggestResults = results {
+                    self.suggestResults = suggestResults
+                    DispatchQueue.main.async {
+                        self.resultsTable.reloadData()
+                    }
                 }
             }
         }
@@ -225,7 +233,11 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
         resultsTable.backgroundColor = palette.backgroundColor
-        resultsTable.separatorColor = palette.secondaryLabel
+        if theme.shared.selectedTheme == .dark {
+            resultsTable.separatorColor = UIColor(white: 0.25, alpha: 1.0)
+        } else {
+            resultsTable.separatorColor = nil
+        }
         DispatchQueue.main.async {
             self.resultsTable.reloadData()
         }

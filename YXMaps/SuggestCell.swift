@@ -46,10 +46,10 @@ class suggestCell: UITableViewCell {
         icon.backgroundColor = .clear
         icon.image = UIImage(named: iconName)
         
-        self.addSubview(heading)
-        self.addSubview(subtitle)
-        self.addSubview(distance)
-        self.addSubview(iconContainer)
+        contentView.addSubview(heading)
+        contentView.addSubview(subtitle)
+        contentView.addSubview(distance)
+        contentView.addSubview(iconContainer)
         iconContainer.addSubview(icon)
     }
     
@@ -102,6 +102,7 @@ class suggestCell: UITableViewCell {
     
     func updateColors() {
         self.backgroundColor = palette.secondaryBackground
+        self.contentView.backgroundColor = palette.secondaryBackground
         icon.image = UIImage(named: iconName)
         iconContainer.backgroundColor = palette.backgroundColor
         heading.textColor = palette.textColor
