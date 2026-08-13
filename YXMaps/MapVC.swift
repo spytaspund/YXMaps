@@ -175,7 +175,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
                 let height = self.view.bounds.height - keyboardHeight - searchBarY - 16
                 self.searchBarHeight.constant = max(48, height)
             }
-            self.view.layoutIfNeeded()
+            self.searchBar.superview?.layoutIfNeeded()
         }, completion: nil)
     }
     
@@ -194,7 +194,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
                 self.searchBarBottomPhone.constant = 8
             }
             self.searchBarHeight.constant = 48
-            self.view.layoutIfNeeded()
+            self.searchBar.superview?.layoutIfNeeded()
         }, completion: nil)
     }
     

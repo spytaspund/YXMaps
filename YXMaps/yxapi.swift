@@ -64,6 +64,7 @@ struct yxData {
 class yxapi {
     static let shared = yxapi()
     private var fileManager = FileManager.default
+    private var ramCache = NSCache<NSString, UIImage>()
     private var tileQueue = DispatchQueue(label: "com.yxmaps.tileQueue", attributes: .concurrent)
     private var tileRequests = Set<String>()
     
@@ -276,6 +277,10 @@ class yxapi {
     // MARK: tiles
     
     func downloadTile(x: Int, y: Int, z: Int, scale: CGFloat, isDark: Bool, isSat: Bool, completion: @escaping (CGImage) -> Void) -> CGImage? {
+        let tileID = "\(isSat ? "s" : (isDark ? "d" : "l"))_\(z)_\(x)_\(y)"
+        
+        if let ramTile = ramCache.object(forKey: tileID as NSString), let cgTile = ramTile.cgImage { return cgTile }
+        
         var cachePath: String {
             if isSat { return yxCache.satTile(x: x, y: y, z: z)}
             else { return yxCache.tile(x: x, y: y, z: z, isDark: isDark)}
@@ -283,39 +288,38 @@ class yxapi {
         
         // checking disk cache
         if fileManager.fileExists(atPath: cachePath), let image = UIImage(contentsOfFile: cachePath), let cgImage = image.cgImage {
+            ramCache.setObject(image, forKey: tileID as NSString)
             return cgImage
         }
         
         // queue thingies; needed becuase otherwise tiles will be redownloaded every N ms.
-        let tileID = "\(isSat ? "s" : (isDark ? "d" : "l"))_\(z)_\(x)_\(y)"
-        var shouldDownload = false
+        var isNewRequest = false
         tileQueue.sync(flags: .barrier) {
-            if !tileRequests.contains(tileID) {
-                tileRequests.insert(tileID)
-                shouldDownload = true
-            }
+            isNewRequest = tileRequests.insert(tileID).inserted
         }
-        
-        guard shouldDownload else { return nil }
+        guard isNewRequest else { return nil }
         
         var url: URL {
             if isSat { return yxURL.satTile(x: x, y: y, z: z) }
             else { return yxURL.tile(x: x, y: y, z: z, scale: scale, isDark: isDark) }
         }
         let request = URLRequest(url: url)
-        //print("REQUESTIN URL: \(url.absoluteString)")
         
-        NSURLConnection.sendAsynchronousRequest(request, queue: .main) { [weak self] response, data, error in
-            self?.tileQueue.async(flags: .barrier) {
-                self?.tileRequests.remove(tileID)
-            }
+        NSURLConnection.sendAsynchronousRequest(request, queue: OperationQueue()) { [weak self] response, data, error in
             let httpResponse = response as? HTTPURLResponse
-            //print("COORDZ \(z), \(x), \(y)")
-            //print("STATUS CODE IZ \(httpResponse?.statusCode ?? 676767)")
             if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData), let cgImage = image.cgImage {
+                self?.ramCache.setObject(image, forKey: tileID as NSString)
                 self?.cacheTile(data: imgData, x: x, y: y, z: z, isDark: isDark, isSat: isSat)
-                completion(cgImage)
+                self?.tileQueue.async(flags: .barrier) {
+                    self?.tileRequests.remove(tileID)
+                }
+                DispatchQueue.main.async {
+                    completion(cgImage)
+                }
             } else {
+                self?.tileQueue.async(flags: .barrier) {
+                    self?.tileRequests.remove(tileID)
+                }
                 print("OH NO TILE RIP AAAA!!")
             }
         }
@@ -338,6 +342,12 @@ class yxapi {
                 print("OH NO TILE IS NOT VALID SHIT SHIT AAAA!!")
                 print("ERROR DISCRIPTZ:: \(error.localizedDescription)")
             }
+        }
+    }
+    
+    func resetTileRequests() {
+        tileQueue.async(flags: .barrier) {
+            self.tileRequests.removeAll()
         }
     }
 }
