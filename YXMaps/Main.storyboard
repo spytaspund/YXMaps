@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Y6W-OH-hqX">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Y6W-OH-hqX">
     <device id="retina6_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19519"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -26,13 +26,13 @@
                             <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1qa-fX-bhg" userLabel="SearchBar">
                                 <rect key="frame" x="8" y="754" width="374" height="48"/>
                                 <subviews>
-                                    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="leading" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Search anything..." minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="LMa-QR-xjx">
+                                    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="leading" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Search places..." minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="LMa-QR-xjx">
                                         <rect key="frame" x="6" y="6" width="316" height="36"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="36" id="Hw1-r5-hBb"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                        <textInputTraits key="textInputTraits"/>
+                                        <textInputTraits key="textInputTraits" returnKeyType="search" enablesReturnKeyAutomatically="YES"/>
                                     </textField>
                                     <tableView clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QfM-aP-j3j">
                                         <rect key="frame" x="6" y="50" width="362" height="0.0"/>
@@ -43,17 +43,29 @@
                                             </userDefinedRuntimeAttribute>
                                         </userDefinedRuntimeAttributes>
                                     </tableView>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZKh-7v-Q6G">
+                                        <rect key="frame" x="330" y="8" width="36" height="34"/>
+                                        <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                        <state key="normal" image="search-light"/>
+                                        <connections>
+                                            <action selector="searchButtonTapped:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="jSi-pN-HQv"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstItem="LMa-QR-xjx" firstAttribute="leading" secondItem="1qa-fX-bhg" secondAttribute="leading" constant="6" id="2Tb-U9-6wu"/>
                                     <constraint firstAttribute="trailing" secondItem="LMa-QR-xjx" secondAttribute="trailing" constant="52" id="4su-XX-be0"/>
+                                    <constraint firstAttribute="trailing" secondItem="ZKh-7v-Q6G" secondAttribute="trailing" constant="8" id="7mK-1z-OwD"/>
                                     <constraint firstAttribute="bottom" secondItem="QfM-aP-j3j" secondAttribute="bottom" priority="999" constant="6" id="K11-G7-eJ7"/>
                                     <constraint firstItem="LMa-QR-xjx" firstAttribute="top" secondItem="1qa-fX-bhg" secondAttribute="top" constant="6" id="M1c-YA-7Zb"/>
                                     <constraint firstAttribute="height" constant="48" id="QRk-hV-UxP"/>
+                                    <constraint firstItem="ZKh-7v-Q6G" firstAttribute="leading" secondItem="LMa-QR-xjx" secondAttribute="trailing" constant="8" id="UP0-vv-hZl"/>
                                     <constraint firstItem="QfM-aP-j3j" firstAttribute="leading" secondItem="1qa-fX-bhg" secondAttribute="leading" constant="6" id="VaV-56-Udl"/>
                                     <constraint firstItem="QfM-aP-j3j" firstAttribute="top" secondItem="LMa-QR-xjx" secondAttribute="bottom" constant="8" id="aao-9I-yCf"/>
                                     <constraint firstAttribute="trailing" secondItem="QfM-aP-j3j" secondAttribute="trailing" constant="6" id="e7C-pI-ba2"/>
+                                    <constraint firstItem="ZKh-7v-Q6G" firstAttribute="top" secondItem="1qa-fX-bhg" secondAttribute="top" constant="8" id="iTq-T1-haJ"/>
+                                    <constraint firstItem="QfM-aP-j3j" firstAttribute="top" secondItem="ZKh-7v-Q6G" secondAttribute="bottom" constant="8" id="rhP-aJ-y8C"/>
                                     <constraint firstAttribute="width" constant="304" id="ziM-jR-FcW"/>
                                 </constraints>
                                 <userDefinedRuntimeAttributes>
@@ -164,6 +176,7 @@
                         <outlet property="searchBar" destination="1qa-fX-bhg" id="f3l-Aj-RJv"/>
                         <outlet property="searchBarBottomPhone" destination="2To-Eo-Vqv" id="7Sq-dR-nA3"/>
                         <outlet property="searchBarHeight" destination="QRk-hV-UxP" id="AA6-bt-UKq"/>
+                        <outlet property="searchBtn" destination="ZKh-7v-Q6G" id="4Tp-MR-ydC"/>
                         <outlet property="searchField" destination="LMa-QR-xjx" id="G65-jB-b3D"/>
                         <outlet property="settingsBtn" destination="51j-Tb-BiO" id="hqp-ad-vny"/>
                     </connections>
@@ -234,6 +247,7 @@
     <resources>
         <image name="gear-light" width="19.333333969116211" height="19"/>
         <image name="location-light" width="20.666666030883789" height="19"/>
+        <image name="search-light" width="20" height="20"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

@@ -17,6 +17,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     @IBOutlet weak var locationBtn: UIButton!
     @IBOutlet weak var searchField: UITextField!
     @IBOutlet weak var resultsTable: UITableView!
+    @IBOutlet weak var searchBtn: UIButton!
     
     @IBOutlet weak var searchBarHeight: NSLayoutConstraint!
     @IBOutlet weak var searchBarBottomPhone: NSLayoutConstraint!
@@ -164,6 +165,8 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         let isPhone = UIDevice.current.userInterfaceIdiom == .phone
         
+        searchBtn.setImage(UIImage(named: "cross-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
+        
         UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
             if isPhone {
                 self.settingsBtn.alpha = 0.0
@@ -187,6 +190,9 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+        
+        searchBtn.setImage(UIImage(named: "search-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
+
         UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
             if isPhone {
                 self.settingsBtn.alpha = 1.0
@@ -233,11 +239,13 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
         resultsTable.backgroundColor = palette.backgroundColor
-        if theme.shared.selectedTheme == .dark {
-            resultsTable.separatorColor = UIColor(white: 0.25, alpha: 1.0)
-        } else {
-            resultsTable.separatorColor = nil
+        resultsTable.separatorColor = isDark ? UIColor(white: 0.25, alpha: 1.0) : nil
+        searchBtn.setImage((self.searchBarHeight.constant == 48) ? UIImage(named: "search-\(isDark ? "dark" : "light")") : UIImage(named: "cross-\(isDark ? "dark" : "light")"), for: .normal)
+        searchField.keyboardAppearance = isDark ? .dark : .light
+        if searchField.isFirstResponder {
+            searchField.reloadInputViews()
         }
+
         DispatchQueue.main.async {
             self.resultsTable.reloadData()
         }
@@ -264,6 +272,30 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     
     @IBAction func locationButtonTapped(_ sender: UIButton) {
         gotoGPS()
+    }
+    
+    @IBAction func searchButtonTapped(_ sender: UIButton) {
+        searchField.text = ""
+        searchSymCount += 1
+        suggestResults.removeAll()
+        resultsTable.reloadData()
+        
+        if searchField.isFirstResponder {
+            searchField.resignFirstResponder()
+        } else {
+            // needed to simulate keyboardWillHide
+            let dummyUserInfo: [AnyHashable: Any] = [
+                UIResponder.keyboardAnimationDurationUserInfoKey: 0.25,
+                UIResponder.keyboardAnimationCurveUserInfoKey: UInt(7)
+            ]
+            let dummyNotification = Notification(
+                name: UIResponder.keyboardWillHideNotification,
+                object: nil,
+                userInfo: dummyUserInfo
+            )
+            
+            keyboardWillHide(notification: dummyNotification as NSNotification)
+        }
     }
     
     // MARK: Map things
