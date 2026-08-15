@@ -10,13 +10,11 @@ import UIKit
 import QuartzCore
 import CoreText
 
-class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource {
+class mapViewController: UIViewController, UIScrollViewDelegate {
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var searchBar: UIView!
     @IBOutlet weak var settingsBtn: UIButton!
     @IBOutlet weak var locationBtn: UIButton!
-    @IBOutlet weak var searchField: UITextField!
-    @IBOutlet weak var resultsTable: UITableView!
     @IBOutlet weak var searchBtn: UIButton!
     
     @IBOutlet weak var searchBarHeight: NSLayoutConstraint!
@@ -31,8 +29,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     private var currentLon: Double?
     
     let suggestCellID = "suggestCell"
-    var suggestResults: [yxData.suggestResult] = []
-    private var searchSymCount = 0
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -69,8 +65,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
             object: nil
         )
         
-        searchField.addTarget(self, action: #selector(searchQueryChanged(_:)), for: .editingChanged)
-        
         searchBar.layer.cornerRadius = 8
         searchBar.clipsToBounds = true // ^ somehow doesn't work without it
         
@@ -104,13 +98,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         }
         gpsMgr.startTracking()
         
-        resultsTable.delegate = self
-        resultsTable.dataSource = self
-        resultsTable.register(suggestCell.self, forCellReuseIdentifier: suggestCellID)
-        resultsTable.contentInset = .zero
-        resultsTable.scrollIndicatorInsets = .zero
-        resultsTable.tableFooterView = UIView()
-        
         /*yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
             if let jsonchik = json {
                 print("YEA GUD!!")
@@ -131,25 +118,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         applyTheme(themeChanged: false)
-    }
-    
-    func numberOfSections(in tableView: UITableView) -> Int { return 1 }
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return suggestResults.count }
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 60 }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
-        let result = suggestResults[indexPath.row]
-        let isDark = theme.shared.selectedTheme == .dark
-        let tag = result.tags.first ?? "locality"
-        
-        cell.iconName = tag.toIconName(isDark: isDark)
-        cell.updateColors()
-        cell.heading.text = result.title.text
-        cell.subtitle.text = result.subtitle.text
-        cell.distance.text = result.distance.text
-        
-        return cell
     }
     
     @objc func keyboardWillShow(notification: NSNotification) {
@@ -204,25 +172,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         }, completion: nil)
     }
     
-    @objc func searchQueryChanged(_ textField: UITextField) {
-        guard let query = textField.text, !query.isEmpty else { return }
-        
-        searchSymCount += 1
-        let currentCount = searchSymCount
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self, self.searchSymCount == currentCount else { return }
-            yxapi.shared.suggest(query: query, lat: 38.5, lon: 55.5) { results in
-                if let suggestResults = results {
-                    self.suggestResults = suggestResults
-                    DispatchQueue.main.async {
-                        self.resultsTable.reloadData()
-                    }
-                }
-            }
-        }
-    }
-    
     @objc func themeChanged() {
         applyTheme(themeChanged: true)
     }
@@ -232,23 +181,11 @@ class mapViewController: UIViewController, UIScrollViewDelegate, UITableViewDele
         searchBar.addBlur(isDark: isDark, tag: 4039)
         
         // colors are automatically adjusted by palette
-        searchField.backgroundColor = palette.secondaryBackground
-        searchField.textColor = palette.textColor
         settingsBtn.backgroundColor = palette.secondaryBackground
         settingsBtn.setImage(UIImage(named: "gear-\(isDark ? "dark" : "light")"), for: .normal)
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
-        resultsTable.backgroundColor = palette.backgroundColor
-        resultsTable.separatorColor = isDark ? UIColor(white: 0.25, alpha: 1.0) : nil
         searchBtn.setImage((self.searchBarHeight.constant == 48) ? UIImage(named: "search-\(isDark ? "dark" : "light")") : UIImage(named: "cross-\(isDark ? "dark" : "light")"), for: .normal)
-        searchField.keyboardAppearance = isDark ? .dark : .light
-        if searchField.isFirstResponder {
-            searchField.reloadInputViews()
-        }
-
-        DispatchQueue.main.async {
-            self.resultsTable.reloadData()
-        }
         
         if let map = mapLayer, themeChanged {
             map.reloadMap()
