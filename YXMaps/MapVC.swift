@@ -15,7 +15,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     @IBOutlet weak var searchBar: UIView!
     @IBOutlet weak var settingsBtn: UIButton!
     @IBOutlet weak var locationBtn: UIButton!
-    @IBOutlet weak var searchBtn: UIButton!
     
     @IBOutlet weak var searchBarHeight: NSLayoutConstraint!
     @IBOutlet weak var searchBarBottomPhone: NSLayoutConstraint!
@@ -28,7 +27,9 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     private var currentLat: Double?
     private var currentLon: Double?
     
-    let suggestCellID = "suggestCell"
+    private var suggestVC: suggestVC? {
+        return children.first(where: { $0 is suggestVC }) as? suggestVC
+    }
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -106,6 +107,8 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
                 print("FUCK U!!!")
             }
         }*/
+        searchBarHeight.constant = 400
+        showResultVC()
         print("yeah im loaded bruv")
     }
     
@@ -133,7 +136,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         let isPhone = UIDevice.current.userInterfaceIdiom == .phone
         
-        searchBtn.setImage(UIImage(named: "cross-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
+        suggestVC?.searchBtn.setImage(UIImage(named: "cross-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
         
         UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
             if isPhone {
@@ -151,15 +154,16 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     }
     
     @objc func keyboardWillHide(notification: NSNotification) {
+        let queryEmpty = suggestVC?.searchField.text?.isEmpty ?? true
         guard let userInfo = notification.userInfo,
               let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
               let curve = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt,
-              (searchField.text?.isEmpty ?? true) else { return } // if field isn't empty - don't hide tableview
+              queryEmpty else { return } // if field isn't empty - don't hide tableview
         
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         let isPhone = UIDevice.current.userInterfaceIdiom == .phone
         
-        searchBtn.setImage(UIImage(named: "search-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
+        suggestVC?.searchBtn.setImage(UIImage(named: "search-\(theme.shared.selectedTheme == .dark ? "dark": "light")"), for: .normal)
 
         UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
             if isPhone {
@@ -185,11 +189,30 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         settingsBtn.setImage(UIImage(named: "gear-\(isDark ? "dark" : "light")"), for: .normal)
         locationBtn.backgroundColor = palette.secondaryBackground
         locationBtn.setImage(UIImage(named: "location-\(isDark ? "dark" : "light")"), for: .normal)
-        searchBtn.setImage((self.searchBarHeight.constant == 48) ? UIImage(named: "search-\(isDark ? "dark" : "light")") : UIImage(named: "cross-\(isDark ? "dark" : "light")"), for: .normal)
+        suggestVC?.searchBtn.setImage((self.searchBarHeight.constant == 48) ? UIImage(named: "search-\(isDark ? "dark" : "light")") : UIImage(named: "cross-\(isDark ? "dark" : "light")"), for: .normal)
         
         if let map = mapLayer, themeChanged {
             map.reloadMap()
         }
+    }
+    
+    func showResultVC() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let newVC = storyboard.instantiateViewController(withIdentifier: "ResultVC") as? resultVC else { return }
+        
+        guard let oldVC = suggestVC else { return }
+
+        oldVC.willMove(toParent: nil)
+
+        addChild(newVC)
+
+        newVC.view.frame = searchBar.bounds
+        newVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        searchBar.addSubview(newVC.view)
+
+        oldVC.view.removeFromSuperview()
+        oldVC.removeFromParent()
+        newVC.didMove(toParent: self)
     }
     
     @objc private func mapTypeChanged() {
@@ -209,30 +232,6 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     
     @IBAction func locationButtonTapped(_ sender: UIButton) {
         gotoGPS()
-    }
-    
-    @IBAction func searchButtonTapped(_ sender: UIButton) {
-        searchField.text = ""
-        searchSymCount += 1
-        suggestResults.removeAll()
-        resultsTable.reloadData()
-        
-        if searchField.isFirstResponder {
-            searchField.resignFirstResponder()
-        } else {
-            // needed to simulate keyboardWillHide
-            let dummyUserInfo: [AnyHashable: Any] = [
-                UIResponder.keyboardAnimationDurationUserInfoKey: 0.25,
-                UIResponder.keyboardAnimationCurveUserInfoKey: UInt(7)
-            ]
-            let dummyNotification = Notification(
-                name: UIResponder.keyboardWillHideNotification,
-                object: nil,
-                userInfo: dummyUserInfo
-            )
-            
-            keyboardWillHide(notification: dummyNotification as NSNotification)
-        }
     }
     
     // MARK: Map things

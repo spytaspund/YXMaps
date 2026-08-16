@@ -11,6 +11,7 @@ import UIKit
 class suggestVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
     @IBOutlet weak var resultsTable: UITableView!
     @IBOutlet weak var searchField: UITextField!
+    @IBOutlet weak var searchBtn: UIButton!
     
     let suggestCellID = "suggestCell"
     let headingCellID = "headingCell"
@@ -29,19 +30,26 @@ class suggestVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         resultsTable.scrollIndicatorInsets = .zero
         resultsTable.tableFooterView = UIView()
         
-        DispatchQueue.main.async {
-            self.resultsTable.reloadData()
-        }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(themeChanged),
+            name: Notification.Name("themeChanged"),
+            object: nil
+        )
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        applyTheme()
     }
     
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        //return suggestResults.count
-        return 3
+        return suggestResults.count
     }
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 100 }
     
-    /*func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: suggestCellID, for: indexPath) as! suggestCell
         let result = suggestResults[indexPath.row]
         let isDark = theme.shared.selectedTheme == .dark
@@ -53,14 +61,6 @@ class suggestVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         cell.subtitle.text = result.subtitle.text
         cell.distance.text = result.distance.text
         
-        return cell
-    }*/
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: headingCellID, for: indexPath) as! headingCell
-        cell.heading.text = "Hufa private island"
-        cell.subtitle.text = "Very long placeholder text oooh bufpgengpwomqwe ssdfger!!! pekqwpkewpkwpodmsfklmlKOP!MPMPOW!P@M@M"
-        cell.updateColors()
         return cell
     }
     
@@ -81,6 +81,19 @@ class suggestVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
                 }
             }
         }
+    }
+    
+    @IBAction func searchButtonTapped(_ sender: UIButton) {
+        searchField.text = ""
+        searchSymCount += 1
+        suggestResults.removeAll()
+        resultsTable.reloadData()
+        
+        view.endEditing(true) // should automatically trigger keyboardWillHide
+    }
+    
+    @objc func themeChanged() {
+        applyTheme()
     }
     
     private func applyTheme() {

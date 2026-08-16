@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		3008007E3014B9D6003D8E56 /* gps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3008007D3014B9D6003D8E56 /* gps.swift */; };
 		300800823014C161003D8E56 /* gps.m in Sources */ = {isa = PBXBuildFile; fileRef = 300800813014C161003D8E56 /* gps.m */; };
+		302568B93031E6DB002D6919 /* ResultVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 302568B83031E6DB002D6919 /* ResultVC.swift */; };
 		307F56E03030937100EBC247 /* SearchCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = 307F56DF3030937100EBC247 /* SearchCells.swift */; };
 		307F56E23030A2B300EBC247 /* SuggestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 307F56E13030A2B300EBC247 /* SuggestVC.swift */; };
 		30C7EDBA301E2C2800877A72 /* SettingsCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C7EDB9301E2C2800877A72 /* SettingsCells.swift */; };
@@ -30,6 +31,7 @@
 		3008007F3014C117003D8E56 /* gps.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gps.h; sourceTree = "<group>"; };
 		300800803014C160003D8E56 /* YXMaps-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YXMaps-Bridging-Header.h"; sourceTree = "<group>"; };
 		300800813014C161003D8E56 /* gps.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = gps.m; sourceTree = "<group>"; };
+		302568B83031E6DB002D6919 /* ResultVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultVC.swift; sourceTree = "<group>"; };
 		307F56DF3030937100EBC247 /* SearchCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchCells.swift; sourceTree = "<group>"; };
 		307F56E13030A2B300EBC247 /* SuggestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestVC.swift; sourceTree = "<group>"; };
 		30C7EDB9301E2C2800877A72 /* SettingsCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsCells.swift; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 				30EEDB1C302236F3005F32CB /* SuggestCell.swift */,
 				307F56DF3030937100EBC247 /* SearchCells.swift */,
 				307F56E13030A2B300EBC247 /* SuggestVC.swift */,
+				302568B83031E6DB002D6919 /* ResultVC.swift */,
 			);
 			path = YXMaps;
 			sourceTree = "<group>";
@@ -203,6 +206,7 @@
 				30F97E283008179500B313FD /* MapVC.swift in Sources */,
 				30C7EDBC301E30F300877A72 /* theme.swift in Sources */,
 				307F56E23030A2B300EBC247 /* SuggestVC.swift in Sources */,
+				302568B93031E6DB002D6919 /* ResultVC.swift in Sources */,
 				30C7EDBA301E2C2800877A72 /* SettingsCells.swift in Sources */,
 				30D63822301D2BFD00E0BEB8 /* SettingsViewController.swift in Sources */,
 			);
