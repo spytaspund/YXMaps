@@ -99,14 +99,14 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         }
         gpsMgr.startTracking()
         
-        /*yxapi.shared.route(start: (34.459061, 51.187538), end: (35.225004, 53.165566)) { json in
+        yxapi.shared.search(query: "Хуфа", ll: "34.459061, 51.187538") { json in
             if let jsonchik = json {
                 print("YEA GUD!!")
-                print("JSONIN: \(jsonchik)")
+                print("RESULT: \(jsonchik.description)")
             } else {
                 print("FUCK U!!!")
             }
-        }*/
+        }
         searchBarHeight.constant = 400
         showResultVC()
         print("yeah im loaded bruv")

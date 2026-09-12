@@ -9,8 +9,17 @@ import Foundation
 import UIKit
 
 class resultVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    @IBOutlet weak var closeBtn: UIButton!
+    @IBOutlet weak var headingLabel: UILabel!
+    @IBOutlet weak var actionBtn: UIButton!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var headerView: UIView!
+    @IBOutlet weak var triviaLabel: UILabel!
+    @IBOutlet weak var ratingBar: UIProgressView!
+    @IBOutlet weak var ratingLabel: UILabel!
+    @IBOutlet weak var workingHours: UILabel!
+    @IBOutlet weak var routeTypeIcon: UIImageView!
+    @IBOutlet weak var routeTrivia: UILabel!
     
     let tabSegCtrl = UISegmentedControl(items: ["Overview", "Photos", "Reviews"])
     var currentTab: Int = 0
@@ -23,6 +32,33 @@ class resultVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         tableView.tableHeaderView = headerView
         
         tabSegCtrl.addTarget(self, action: #selector(tabChanged), for: .valueChanged)
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(themeChanged),
+            name: Notification.Name("themeChanged"),
+            object: nil
+        )
+    }
+    
+    @objc private func themeChanged() {
+        let isDark = theme.shared.selectedTheme == .dark
+        
+        headerView.backgroundColor = palette.secondaryBackground
+        headingLabel.textColor = palette.textColor
+        closeBtn.setImage(UIImage(named: "cross-\(isDark ? "dark" : "light")"), for: .normal)
+        
+        triviaLabel.textColor = palette.secondaryLabel
+        ratingLabel.textColor = palette.textColor
+        workingHours.textColor = palette.secondaryLabel
+        routeTypeIcon.image = UIImage(named: "metro-\(isDark ? "dark" : "light")")
+        routeTrivia.textColor = palette.secondaryLabel
+        
+        tableView.backgroundColor = palette.backgroundColor
+        tableView.separatorColor = isDark ? UIColor(white: 0.25, alpha: 1.0) : nil
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
     }
     
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }

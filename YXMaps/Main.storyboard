@@ -296,7 +296,7 @@
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Wxc-sQ-eu9">
                                 <rect key="frame" x="342" y="0.0" width="48" height="48"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="48" id="0lF-M7-SsZ"/>
                                     <constraint firstAttribute="height" constant="48" id="gHL-kf-Un6"/>
@@ -430,8 +430,17 @@
                     </view>
                     <size key="freeformSize" width="390" height="400"/>
                     <connections>
+                        <outlet property="actionBtn" destination="gfe-GE-ERj" id="qmf-T2-4aS"/>
+                        <outlet property="closeBtn" destination="Wxc-sQ-eu9" id="Itw-NO-YhA"/>
                         <outlet property="headerView" destination="Y1J-vv-uLH" id="EZz-GI-fBd"/>
+                        <outlet property="headingLabel" destination="ZQL-gP-eA1" id="6px-qc-obF"/>
+                        <outlet property="ratingBar" destination="NPt-H1-bA2" id="RfI-8m-Ipz"/>
+                        <outlet property="ratingLabel" destination="KJ5-Af-iuM" id="MEc-Yi-vwX"/>
+                        <outlet property="routeTrivia" destination="jzh-9b-f3D" id="tyZ-Js-mCH"/>
+                        <outlet property="routeTypeIcon" destination="hrX-ll-74D" id="lrZ-GE-Vxc"/>
                         <outlet property="tableView" destination="g0I-jz-3Fh" id="ufY-VH-9LU"/>
+                        <outlet property="triviaLabel" destination="nO2-LE-jHH" id="RIb-To-lm9"/>
+                        <outlet property="workingHours" destination="JUv-mE-1D5" id="cyg-Y0-ErM"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6tb-w9-4Dl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>

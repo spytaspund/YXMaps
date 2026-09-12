@@ -59,19 +59,56 @@ struct yxData {
         let value: Float
         let text: String
     }
+    
+    struct ratingData: Decodable {
+        let ratingCount: Int
+        let ratingValue: Double
+        let reviewCount: Int
+    }
+    
+    struct workingStatus: Decodable {
+        let isOpenNow: Bool
+        let text: String
+        let shortText: String
+    }
+    
+    struct searchResult: Decodable {
+        let type: String
+        let title: String
+        let description: String
+        let address: String
+        let ratingData: ratingData?
+        let currentWorkingStatus: workingStatus?
+    }
+    
+    struct rawSearch: Decodable { let data: searchData }
+    struct searchData: Decodable {
+        let items: [searchResult]
+    }
 }
 
 class yxapi {
     static let shared = yxapi()
     private var fileManager = FileManager.default
     private var ramCache = NSCache<NSString, UIImage>()
-    private var tileQueue = DispatchQueue(label: "com.yxmaps.tileQueue", attributes: .concurrent)
+    private let tileOperationQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.name = "com.yxmaps.tileQueue"
+        queue.maxConcurrentOperationCount = 4
+        return queue
+    }()
+    private let networkQueue = OperationQueue()
+    private let tileAccessQueue = DispatchQueue(label: "com.yxmaps.tileAccessQueue")
     private var tileRequests = Set<String>()
-    
+        
     private var userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Gecko/20100101 Firefox/153.0"
     private var csrfToken: String?
     private var sessionID: String?
     private var bootstrapped = false
+    
+    init() {
+        ramCache.countLimit = 64
+    }
     
     private func djb2Hash(_ string: String) -> String { // needed to sign URLs (?s param)
         var hash: UInt32 = 5381
@@ -127,7 +164,7 @@ class yxapi {
         }
     }
     
-    func search(query: String, ll: String, completion: @escaping (String?) -> Void) {
+    func search(query: String, ll: String, completion: @escaping ([yxData.searchResult]?) -> Void) {
         if !bootstrapped || csrfToken == nil || sessionID == nil {
             bootstrap { [weak self] success in
                 if success {
@@ -155,7 +192,7 @@ class yxapi {
         }
     }
         
-    private func searchRequest(query: String, ll: String, completion: @escaping (String?) -> Void) {
+    private func searchRequest(query: String, ll: String, completion: @escaping ([yxData.searchResult]?) -> Void) {
         guard let csrf = self.csrfToken, let id = self.sessionID else {
             completion(nil)
             return
@@ -197,8 +234,16 @@ class yxapi {
         request.httpShouldHandleCookies = true
         
         NSURLConnection.sendAsynchronousRequest(request as URLRequest, queue: .main) { response, data, error in
-            if let data = data, error == nil, let json = String(data: data, encoding: .utf8) {
-                completion(json)
+            if let data = data, error == nil {
+                do {
+                    let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
+                    let decoded = try decoder.decode(yxData.rawSearch.self, from: data)
+                    completion(decoded.data.items)
+                } catch {
+                    print("SEARCH DECODE ERROR!! \(error)")
+                    completion(nil)
+                }
             } else {
                 completion(nil)
             }
@@ -277,76 +322,100 @@ class yxapi {
     // MARK: tiles
     
     func downloadTile(x: Int, y: Int, z: Int, scale: CGFloat, isDark: Bool, isSat: Bool, completion: @escaping (CGImage) -> Void) -> CGImage? {
-        let tileID = "\(isSat ? "s" : (isDark ? "d" : "l"))_\(z)_\(x)_\(y)"
+        let tileID = "\(z)_\(x)_\(y)"
+        TileLogger.shared.log("REQ \(tileID)")
         
-        if let ramTile = ramCache.object(forKey: tileID as NSString), let cgTile = ramTile.cgImage { return cgTile }
-        
-        var cachePath: String {
-            if isSat { return yxCache.satTile(x: x, y: y, z: z)}
-            else { return yxCache.tile(x: x, y: y, z: z, isDark: isDark)}
+        if let ramTile = ramCache.object(forKey: tileID as NSString), let cgTile = ramTile.cgImage {
+            TileLogger.shared.log("HIT RAM \(tileID)")
+            return cgTile
         }
         
-        // checking disk cache
-        if fileManager.fileExists(atPath: cachePath), let image = UIImage(contentsOfFile: cachePath), let cgImage = image.cgImage {
+        let cachePath = isSat ? yxCache.satTile(x: x, y: y, z: z) : yxCache.tile(x: x, y: y, z: z, isDark: isDark)
+        
+        if fileManager.fileExists(atPath: cachePath),
+           let image = UIImage(contentsOfFile: cachePath),
+           let cgImage = image.cgImage {
+            TileLogger.shared.log("HIT DISK \(tileID)")
             ramCache.setObject(image, forKey: tileID as NSString)
-            return cgImage
+            DispatchQueue.main.async {
+                completion(cgImage)
+            }
+            return nil
         }
         
-        // queue thingies; needed becuase otherwise tiles will be redownloaded every N ms.
         var isNewRequest = false
-        tileQueue.sync(flags: .barrier) {
-            isNewRequest = tileRequests.insert(tileID).inserted
-        }
-        guard isNewRequest else { return nil }
-        
-        var url: URL {
-            if isSat { return yxURL.satTile(x: x, y: y, z: z) }
-            else { return yxURL.tile(x: x, y: y, z: z, scale: scale, isDark: isDark) }
-        }
-        let request = URLRequest(url: url)
-        
-        NSURLConnection.sendAsynchronousRequest(request, queue: OperationQueue()) { [weak self] response, data, error in
-            let httpResponse = response as? HTTPURLResponse
-            if error == nil, let respCode = httpResponse?.statusCode, respCode == 200, let imgData = data, let image = UIImage(data: imgData), let cgImage = image.cgImage {
-                self?.ramCache.setObject(image, forKey: tileID as NSString)
-                self?.cacheTile(data: imgData, x: x, y: y, z: z, isDark: isDark, isSat: isSat)
-                self?.tileQueue.async(flags: .barrier) {
-                    self?.tileRequests.remove(tileID)
-                }
-                DispatchQueue.main.async {
-                    completion(cgImage)
-                }
-            } else {
-                self?.tileQueue.async(flags: .barrier) {
-                    self?.tileRequests.remove(tileID)
-                }
-                print("OH NO TILE RIP AAAA!!")
+        tileAccessQueue.sync {
+            if !tileRequests.contains(tileID) {
+                tileRequests.insert(tileID)
+                isNewRequest = true
             }
         }
+        
+        guard isNewRequest else {
+            TileLogger.shared.log("SKIP DUP \(tileID)")
+            return nil
+        }
+        
+        let url = isSat ? yxURL.satTile(x: x, y: y, z: z) : yxURL.tile(x: x, y: y, z: z, scale: scale, isDark: isDark)
+        var request = URLRequest(url: url)
+        request.setValue(self.userAgent, forHTTPHeaderField: "User-Agent")
+        
+        TileLogger.shared.log("NET START \(tileID)")
+        
+        NSURLConnection.sendAsynchronousRequest(request, queue: OperationQueue.main) { [weak self] response, data, error in
+            guard let self = self else { return }
+            
+            self.tileAccessQueue.async {
+                self.tileRequests.remove(tileID)
+            }
+            
+            if let error = error {
+                TileLogger.shared.log("NET ERR \(tileID): \(error.localizedDescription)")
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                TileLogger.shared.log("NET ERR \(tileID): Bad Response")
+                return
+            }
+            
+            if httpResponse.statusCode != 200 {
+                TileLogger.shared.log("NET HTTP \(httpResponse.statusCode) \(tileID)")
+                return
+            }
+            
+            guard let imgData = data, let image = UIImage(data: imgData), let cgImage = image.cgImage else {
+                TileLogger.shared.log("NET BAD DATA \(tileID)")
+                return
+            }
+            
+            TileLogger.shared.log("NET OK \(tileID) (\(imgData.count)b)")
+            
+            self.ramCache.setObject(image, forKey: tileID as NSString)
+            self.cacheTile(data: imgData, path: cachePath)
+            
+            completion(cgImage)
+        }
+        
         return nil
     }
     
-    func cacheTile(data: Data, x: Int, y: Int, z: Int, isDark: Bool, isSat: Bool) {
+    private func cacheTile(data: Data, path: String) {
         DispatchQueue.global(priority: .background).async {
-            var cachePath: String {
-                if isSat { return yxCache.satTile(x: x, y: y, z: z)}
-                else { return yxCache.tile(x: x, y: y, z: z, isDark: isDark)}
-            }
-            let nsCachePath = cachePath as NSString
-            let url = URL(fileURLWithPath: cachePath)
-            let directoryPath = nsCachePath.deletingLastPathComponent
+            let url = URL(fileURLWithPath: path)
+            let directoryPath = (path as NSString).deletingLastPathComponent
+            let fm = FileManager.default
             do {
-                try FileManager.default.createDirectory(atPath: directoryPath, withIntermediateDirectories: true, attributes: nil)
+                try fm.createDirectory(atPath: directoryPath, withIntermediateDirectories: true, attributes: nil)
                 try data.write(to: url, options: .atomic)
             } catch {
-                print("OH NO TILE IS NOT VALID SHIT SHIT AAAA!!")
-                print("ERROR DISCRIPTZ:: \(error.localizedDescription)")
+                print("CACHE WRITE ERROR: \(error.localizedDescription)")
             }
         }
     }
     
     func resetTileRequests() {
-        tileQueue.async(flags: .barrier) {
+        tileAccessQueue.async {
             self.tileRequests.removeAll()
         }
     }
@@ -372,5 +441,36 @@ extension String {
         
         let suffix = isDark ? "-dark" : "-light"
         return "\(slug)\(suffix)"
+    }
+}
+
+class TileLogger {
+    static let shared = TileLogger()
+    
+    weak var debugLabel: UILabel?
+    
+    private let queue = DispatchQueue(label: "com.yxmaps.loggerQueue")
+    private var logLines: [String] = []
+    private let maxLines = 12
+    
+    func log(_ message: String) {
+        let timestamp = String(format: "%.2f", Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 1000))
+        let threadInfo = Thread.isMainThread ? "MAIN" : "BG-\(String(format: "%04x", pthread_mach_thread_np(pthread_self())))"
+        let fullMessage = "[\(timestamp)][\(threadInfo)] \(message)"
+        
+        NSLog("%@", fullMessage)
+        
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            self.logLines.append(fullMessage)
+            if self.logLines.count > self.maxLines {
+                self.logLines.removeFirst(self.logLines.count - self.maxLines)
+            }
+            let textToDisplay = self.logLines.joined(separator: "\n")
+            
+            DispatchQueue.main.async {
+                self.debugLabel?.text = textToDisplay
+            }
+        }
     }
 }
