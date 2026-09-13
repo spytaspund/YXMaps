@@ -23,6 +23,16 @@ class resultVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     let tabSegCtrl = UISegmentedControl(items: ["Overview", "Photos", "Reviews"])
     var currentTab: Int = 0
+    var result: yxData.searchResult? {
+        didSet {
+            if isViewLoaded {
+                DispatchQueue.main.async {
+                    self.showSearchData()
+                    self.tableView.reloadData()
+                }
+            }
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,6 +49,12 @@ class resultVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
             name: Notification.Name("themeChanged"),
             object: nil
         )
+        showSearchData()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        themeChanged()
     }
     
     @objc private func themeChanged() {
@@ -59,6 +75,25 @@ class resultVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
+    }
+    
+    func showSearchData() {
+        guard let res = result else { return }
+        
+        headingLabel.text = res.title ?? "Без названия"
+        triviaLabel.text = res.address ?? res.description ?? ""
+        
+        if let val = res.ratingData?.ratingValue {
+            ratingBar.progress = val / 5.0
+        } else {
+            ratingBar.progress = 0.0
+        }
+        
+        let rVal = res.ratingData?.ratingValue ?? 0.0
+        let rCount = res.ratingData?.ratingCount ?? 0
+        ratingLabel.text = String(format: "%.1f ★ (%d оценок)", rVal, rCount)
+        
+        workingHours.text = res.currentWorkingStatus?.text ?? "Часы работы не указаны"
     }
     
     func numberOfSections(in tableView: UITableView) -> Int { return 1 }

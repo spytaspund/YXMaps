@@ -30,6 +30,7 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
     private var suggestVC: suggestVC? {
         return children.first(where: { $0 is suggestVC }) as? suggestVC
     }
+    private var searchResult: yxData.searchResult?
     
     let mapSize = CGSize(width: pow(2.0, 17.0) * 256, height: pow(2.0, 17.0) * 256)
     
@@ -99,16 +100,17 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
         }
         gpsMgr.startTracking()
         
-        yxapi.shared.search(query: "Хуфа", ll: "34.459061, 51.187538") { json in
+        yxapi.shared.search(query: "Третьяковская галерея", ll: "34.459061, 51.187538") { json in
             if let jsonchik = json {
                 print("YEA GUD!!")
                 print("RESULT: \(jsonchik.description)")
+                self.searchResult = jsonchik
+                self.showResultVC()
             } else {
                 print("FUCK U!!!")
             }
         }
         searchBarHeight.constant = 400
-        showResultVC()
         print("yeah im loaded bruv")
     }
     
@@ -208,6 +210,9 @@ class mapViewController: UIViewController, UIScrollViewDelegate {
 
         newVC.view.frame = searchBar.bounds
         newVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if let result = searchResult {
+            newVC.result = result
+        }
         searchBar.addSubview(newVC.view)
 
         oldVC.view.removeFromSuperview()

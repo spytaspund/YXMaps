@@ -62,7 +62,7 @@ struct yxData {
     
     struct ratingData: Decodable {
         let ratingCount: Int
-        let ratingValue: Double
+        let ratingValue: Float
         let reviewCount: Int
     }
     
@@ -81,8 +81,14 @@ struct yxData {
         let currentWorkingStatus: workingStatus?
     }
     
-    struct rawSearch: Decodable { let data: searchData }
+    struct rawSearch: Decodable {
+        let data: searchData
+    }
+        
     struct searchData: Decodable {
+        let requestId: String?
+        let totalResultCount: Int?
+        let resultsCount: Int?
         let items: [searchResult]
     }
 }
@@ -136,7 +142,7 @@ class yxapi {
             return
         }
         
-        guard let url = URL(string: "https://yandex.ru/maps") else {
+        guard let url = URL(string: "https://yandex.ru/maps/") else {
             bootstrapped = false
             completion(false)
             return
@@ -164,7 +170,7 @@ class yxapi {
         }
     }
     
-    func search(query: String, ll: String, completion: @escaping ([yxData.searchResult]?) -> Void) {
+    func search(query: String, ll: String, completion: @escaping (yxData.searchResult?) -> Void) {
         if !bootstrapped || csrfToken == nil || sessionID == nil {
             bootstrap { [weak self] success in
                 if success {
@@ -192,7 +198,7 @@ class yxapi {
         }
     }
         
-    private func searchRequest(query: String, ll: String, completion: @escaping ([yxData.searchResult]?) -> Void) {
+    private func searchRequest(query: String, ll: String, completion: @escaping (yxData.searchResult?) -> Void) {
         guard let csrf = self.csrfToken, let id = self.sessionID else {
             completion(nil)
             return
@@ -232,14 +238,23 @@ class yxapi {
         request.setValue("https://yandex.ru", forHTTPHeaderField: "Origin")
         request.setValue("https://yandex.ru/maps/", forHTTPHeaderField: "Referer")
         request.httpShouldHandleCookies = true
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+            let cookieHeaders = HTTPCookie.requestHeaderFields(with: cookies)
+            if let cookieString = cookieHeaders["Cookie"] {
+                request.setValue(cookieString, forHTTPHeaderField: "Cookie")
+            }
+        }
         
         NSURLConnection.sendAsynchronousRequest(request as URLRequest, queue: .main) { response, data, error in
             if let data = data, error == nil {
+                if let rawString = String(data: data, encoding: .utf8) {
+                    print("RAW SEARCH RESPONSE:\n\(rawString)")
+                }
                 do {
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
                     let decoded = try decoder.decode(yxData.rawSearch.self, from: data)
-                    completion(decoded.data.items)
+                    completion(decoded.data.items.first)
                 } catch {
                     print("SEARCH DECODE ERROR!! \(error)")
                     completion(nil)
@@ -321,6 +336,13 @@ class yxapi {
     
     // MARK: tiles
     
+    func cancelTileRequests() {
+        tileOperationQueue.cancelAllOperations()
+        tileAccessQueue.async { [weak self] in
+            self?.tileRequests.removeAll()
+        }
+    }
+    
     func downloadTile(x: Int, y: Int, z: Int, scale: CGFloat, isDark: Bool, isSat: Bool, completion: @escaping (CGImage) -> Void) -> CGImage? {
         let tileID = "\(z)_\(x)_\(y)"
         TileLogger.shared.log("REQ \(tileID)")
@@ -357,7 +379,7 @@ class yxapi {
         }
         
         let url = isSat ? yxURL.satTile(x: x, y: y, z: z) : yxURL.tile(x: x, y: y, z: z, scale: scale, isDark: isDark)
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 3.0)
         request.setValue(self.userAgent, forHTTPHeaderField: "User-Agent")
         
         TileLogger.shared.log("NET START \(tileID)")
@@ -458,7 +480,7 @@ class TileLogger {
         let threadInfo = Thread.isMainThread ? "MAIN" : "BG-\(String(format: "%04x", pthread_mach_thread_np(pthread_self())))"
         let fullMessage = "[\(timestamp)][\(threadInfo)] \(message)"
         
-        NSLog("%@", fullMessage)
+        //NSLog("%@", fullMessage)
         
         queue.async { [weak self] in
             guard let self = self else { return }
